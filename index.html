@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вкусна Седмица - Седмичен Планер & Рецепти</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .active-tab { border-bottom: 3px solid #059669; color: #059669; font-weight: bold; }
+        .recipe-card { transition: all 0.2s ease; cursor: pointer; }
+        .recipe-card:hover { transform: translateY(-2px); }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #10B981; }
+    </style>
+</head>
+<body class="bg-emerald-50/30 text-gray-800 font-sans min-h-screen pb-12">
+
+    <!-- Хедър -->
+    <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-emerald-100 sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-xl shadow-inner">🥗</div>
+                <div>
+                    <h1 class="text-xl font-black text-emerald-800 tracking-tight">Вкусна Седмица</h1>
+                    <p class="text-[10px] text-emerald-600 font-medium">Семеен кулинарен планер</p>
+                </div>
+            </div>
+            <span class="text-xs bg-emerald-100/60 text-emerald-800 px-3 py-1 rounded-full font-semibold border border-emerald-200/50">✨ Ментов пастел</span>
+        </div>
+        
+        <!-- Навигация (3-те Таба) -->
+        <nav class="flex border-t border-gray-100 max-w-5xl mx-auto px-4 bg-white">
+            <button onclick="switchTab('plan')" id="tab-btn-plan" class="flex-1 py-3 text-center font-medium text-sm active-tab flex items-center justify-center gap-2">
+                <i class="fa-regular fa-calendar-check text-emerald-600"></i> ПЛАН
+            </button>
+            <button onclick="switchTab('recipes')" id="tab-btn-recipes" class="flex-1 py-3 text-center font-medium text-sm text-gray-500 hover:text-emerald-600 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-utensils text-emerald-600"></i> РЕЦЕПТИ
+            </button>
+            <button onclick="switchTab('shopping')" id="tab-btn-shopping" class="flex-1 py-3 text-center font-medium text-sm text-gray-500 hover:text-emerald-600 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-cart-shopping text-emerald-600"></i> СПИСЪК
+            </button>
+        </nav>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-6">
+
+        <!-- ================= ТАБ 1: ПЛАН ================= -->
+        <section id="tab-plan" class="space-y-4">
+            <div class="flex justify-between items-center bg-white p-4 rounded-3xl shadow-sm border border-emerald-100/60">
+                <div>
+                    <h2 class="text-base font-bold text-gray-800">Меню за седмицата</h2>
+                    <p class="text-xs text-gray-500">Планирайте ястията за всеки ден от седмицата</p>
+                </div>
+                <button onclick="clearWeeklyPlan()" class="text-xs bg-rose-50 text-rose-600 hover:bg-rose-100 px-3 py-1.5 rounded-full font-medium transition">
+                    <i class="fa-regular fa-trash-can mr-1"></i> Изчисти
+                </button>
+            </div>
+
+            <div id="days-container" class="space-y-3">
+                <!-- Дните се генерират от JS -->
+            </div>
+        </section>
+
+
+        <!-- ================= ТАБ 2: РЕЦЕПТИ ================= -->
+        <section id="tab-recipes" class="hidden space-y-5">
+            
+            <div class="flex bg-emerald-100/50 p-1 rounded-2xl">
+                <button onclick="setRecipeSubView('all')" id="subtab-all" class="flex-1 py-2 rounded-xl font-bold text-xs bg-white text-emerald-800 shadow-sm transition">
+                    📚 Всички рецепти
+                </button>
+                <button onclick="setRecipeSubView('week')" id="subtab-week" class="flex-1 py-2 rounded-xl font-bold text-xs text-emerald-700 hover:text-emerald-900 transition">
+                    📅 Тази седмица (<span id="week-recipes-count">0</span>)
+                </button>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-emerald-400 text-sm"></i>
+                    <input type="text" id="recipe-search" oninput="filterRecipes()" placeholder="Търси по име или съставка..." class="w-full pl-9 pr-4 py-2 border border-emerald-100 rounded-2xl text-xs bg-white">
+                </div>
+                <button onclick="openAddRecipeModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-5 py-2.5 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition">
+                    <i class="fa-solid fa-plus"></i> Добави лична рецепта
+                </button>
+            </div>
+
+            <div id="recipe-categories-bar" class="flex gap-2 overflow-x-auto pb-1 text-xs scrollbar-none">
+                <!-- Категории от JS -->
+            </div>
+
+            <div id="recipes-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Картите от JS -->
+            </div>
+        </section>
+
+
+        <!-- ================= ТАБ 3: СПИСЪК ЗА ПАЗАРУВАНЕ ================= -->
+        <section id="tab-shopping" class="hidden space-y-4">
+            <div class="bg-white p-4 rounded-3xl shadow-sm border border-emerald-100/60 flex justify-between items-center">
+                <div>
+                    <h2 class="text-base font-bold text-gray-800">Списък за пазаруване</h2>
+                    <p class="text-xs text-gray-500">Автоматично комбинирани съставки с точни мерни единици</p>
+                </div>
+                <button onclick="clearCheckedShoppingItems()" class="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-3 py-1.5 rounded-full font-semibold transition">
+                    <i class="fa-regular fa-circle-check mr-1"></i> Изчисти купените
+                </button>
+            </div>
+
+            <div class="flex gap-2">
+                <input type="text" id="manual-item-input" placeholder="Добави друг продукт (напр. Вода, Салфетки)..." class="flex-1 px-4 py-2.5 border border-emerald-100 rounded-2xl text-xs bg-white">
+                <button onclick="addManualShoppingItem()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2.5 rounded-2xl text-xs font-bold transition">
+                    + Добави
+                </button>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-sm border border-emerald-100 overflow-hidden p-2">
+                <div id="shopping-list-items" class="divide-y divide-emerald-50">
+                    <!-- Продуктите от JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- МОДАЛЕН ПРОЗОРЕЦ ЗА ПРЕГЛЕД И ГОТВЕНЕ НА РЕЦЕПТА -->
+    <div id="view-recipe-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-xl border border-emerald-100 flex flex-col overflow-hidden">
+            <div class="relative h-48 bg-emerald-100">
+                <img id="view-recipe-img" src="" class="w-full h-full object-cover">
+                <button onclick="closeViewRecipeModal()" class="absolute top-3 right-3 w-8 h-8 bg-white/80 backdrop-blur-md text-gray-700 rounded-full flex items-center justify-center text-lg font-bold shadow-md hover:bg-white">&times;</button>
+                <div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-emerald-800 shadow-sm flex items-center gap-1">
+                    ⏱️ <span id="view-recipe-time"></span> мин | ⭐ <span id="view-recipe-diff"></span>
+                </div>
+            </div>
+            
+            <div class="p-6 space-y-5 overflow-y-auto">
+                <div>
+                    <h3 id="view-recipe-title" class="text-xl font-black text-gray-800"></h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Отбелязвайте съставките и стъпките, докато готвите</p>
+                </div>
+
+                <div class="space-y-2">
+                    <h4 class="font-bold text-xs text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-basket-shopping text-emerald-600"></i> Необходими продукти:
+                    </h4>
+                    <div id="view-recipe-ingredients" class="bg-emerald-50/50 p-3 rounded-2xl space-y-1.5 text-xs text-gray-700 border border-emerald-100/60"></div>
+                </div>
+
+                <div class="space-y-2">
+                    <h4 class="font-bold text-xs text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-fire-burner text-emerald-600"></i> Начин на приготвяне:
+                    </h4>
+                    <div id="view-recipe-steps" class="space-y-2 text-xs text-gray-700"></div>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-gray-50 border-t border-emerald-100 flex justify-end">
+                <button onclick="closeViewRecipeModal()" class="px-5 py-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition">
+                    Готово / Затвори
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЕН ПРОЗОРЕЦ ЗА ДОБАВЯНЕ НА ЛИЧНА РЕЦЕПТА -->
+    <div id="recipe-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-4 shadow-xl border border-emerald-100">
+            <div class="flex justify-between items-center border-b border-emerald-100 pb-3">
+                <h3 class="text-base font-bold text-emerald-900">Добавяне на рецепта</h3>
+                <button onclick="closeAddRecipeModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+            </div>
+
+            <div class="flex bg-emerald-50 p-1 rounded-2xl text-xs font-semibold">
+                <button type="button" onclick="setAddMode('url')" id="mode-btn-url" class="flex-1 py-1.5 rounded-xl bg-white text-emerald-800 shadow-sm">🔗 От URL (Линк)</button>
+                <button type="button" onclick="setAddMode('ocr')" id="mode-btn-ocr" class="flex-1 py-1.5 rounded-xl text-gray-500">📸 От Снимка (OCR)</button>
+                <button type="button" onclick="setAddMode('manual')" id="mode-btn-manual" class="flex-1 py-1.5 rounded-xl text-gray-500">✍️ Ръчно</button>
+            </div>
+
+            <!-- Режим 1: URL -->
+            <div id="add-mode-url" class="space-y-3">
+                <p class="text-xs text-gray-500">Поставете линк от кулинарен сайт. Системата автоматично ще извлече заглавието, съставките и стъпките.</p>
+                <div class="flex gap-2">
+                    <input type="url" id="import-url-input" placeholder="https://gotvach.bg/recipe/domashna-banitsa" class="flex-1 p-2.5 border border-emerald-100 rounded-2xl text-xs">
+                    <button type="button" onclick="parseRecipeFromURL()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-2xl text-xs flex items-center gap-1">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Извлечи
+                    </button>
+                </div>
+            </div>
+
+            <!-- Режим 2: OCR Снимка -->
+            <div id="add-mode-ocr" class="hidden space-y-3">
+                <p class="text-xs text-gray-500">Качете снимка от тефтер или готварска книга за автоматично разпознаване.</p>
+                <input type="file" id="ocr-file-input" accept="image/*" onchange="parseRecipeFromOCR(event)" class="text-xs text-gray-500 w-full">
+            </div>
+
+            <!-- Форма за запазване -->
+            <form id="add-recipe-form" onsubmit="saveCustomRecipe(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Име на ястието *</label>
+                    <input type="text" id="custom-title" required placeholder="напр. Домашна лазаня" class="w-full p-2.5 border border-emerald-100 rounded-2xl font-bold text-emerald-900">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">Време (мин)</label>
+                        <input type="number" id="custom-time" placeholder="30" class="w-full p-2.5 border border-emerald-100 rounded-2xl">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">Трудност</label>
+                        <select id="custom-difficulty" class="w-full p-2.5 border border-emerald-100 rounded-2xl">
+                            <option value="Лесно">⭐ Лесно</option>
+                            <option value="Средно">⭐⭐ Средно</option>
+                            <option value="Сложно">⭐⭐⭐ Сложно</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Съставки (разделени със запетая) *</label>
+                    <textarea id="custom-ingredients" required rows="3" placeholder="Брашно 500г, Краве сирене 300г, Яйца 4 бр" class="w-full p-2.5 border border-emerald-100 rounded-2xl"></textarea>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Стъпки за приготвяне (по една на нов ред)</label>
+                    <textarea id="custom-steps" rows="3" placeholder="1. Загрейте фурната&#10;2. Разбийте яйцата..." class="w-full p-2.5 border border-emerald-100 rounded-2xl"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-emerald-100">
+                    <button type="button" onclick="closeAddRecipeModal()" class="px-4 py-2 rounded-2xl border border-gray-200 text-gray-600">Отказ</button>
+                    <button type="submit" class="px-5 py-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold">Запази рецептата</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        const DEFAULT_RECIPES = [
+            { 
+                id: '1', 
+                name: 'Рогче със сирене', 
+                time: 35, 
+                diff: 'Лесно', 
+                cat: ['Закуска'], 
+                ing: ['Брашно 500г', 'Краве сирене 200г', 'Кисело мляко 1 кофичка', 'Яйца 2 бр', 'Краве масло 50г'], 
+                steps: [
+                    'Замесете меко тесто от брашното, киселото мляко, 1 яйце и разтопеното масло.',
+                    'Оставете го да почине 15 минути.',
+                    'Натрошете сиренето и го разбъркайте с другия белтък.',
+                    'Разточете кора, нарежете на триъгълници, сложете от плънката и навийте рогчета.',
+                    'Намажете с жълтък и печете на 180°C за 25 минути до златисто.'
+                ],
+                img: 'https://images.unsplash.com/photo-1589367920969-ab8e050bbb04?auto=format&fit=crop&w=400&q=80' 
+            },
+            { 
+                id: '2', 
+                name: 'Мусака', 
+                time: 60, 
+                diff: 'Средно', 
+                cat: ['Основни'], 
+                ing: ['Картофи 1 кг', 'Кайма смес 500г', 'Лук 1 глава', 'Домати 2 бр', 'Кисело мляко 1 кофичка', 'Яйца 3 бр', 'Брашно 2 с.л.'], 
+                steps: [
+                    'Нарежете картофите на малки кубчета.',
+                    'Запържете ситно нарязания лук и каймата, докато се раздроби, след което добавете доматите и чубрица.',
+                    'Смесете картофите и каймата в тава, налейте малко вода и печете 40 минути.',
+                    'Разбийте яйцата с киселото мляко и брашното, залейте мусаката и допечете 10 минути.'
+                ],
+                img: 'https://images.unsplash.com/photo-1541544741938-0af808871cc0?auto=format&fit=crop&w=400&q=80' 
+            },
+            { 
+                id: '3', 
+                name: 'Пилешко фрикасе', 
+                time: 40, 
+                diff: 'Средно', 
+                cat: ['Основни'], 
+                ing: ['Пилешко месо 600г', 'Кисело мляко 1 кофичка', 'Яйца 2 жълтъка', 'Брашно 3 с.л.', 'Краве масло 50г'], 
+                steps: [
+                    'Сварете пилешкото месо в посолена вода и го обезкостете на късове.',
+                    'В маслото запържете леко брашното.',
+                    'Започнете да наливате от пилешкия бульон при постоянно бъркане до получаване на каша.',
+                    'Разбийте жълтъците с киселото мляко и ги добавете на тънка струя.',
+                    'Върнете пилешкото месо в соса и оставете да къкри 5 минути.'
+                ],
+                img: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=400&q=80' 
+            },
+            { 
+                id: '4', 
+                name: 'Баница със сирене', 
+                time: 45, 
+                diff: 'Лесно', 
+                cat: ['Закуска'], 
+                ing: ['Кори за баница 1 пакет', 'Краве сирене 350г', 'Яйца 4 бр', 'Кисело мляко 1 кофичка', 'Краве масло 100г'], 
+                steps: [
+                    'Разбийте яйцата с киселото мляко и натрошеното сирене.',
+                    'Разтопете маслото.',
+                    'Взимайте по две кори, поръсвайте с масло и плънка и навивайте на руло.',
+                    'Наредете в намазнена тава и печете на 190°C около 35 минути.'
+                ],
+                img: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=400&q=80' 
+            }
+        ];
+
+        const UNIT_DICTIONARY = {
+            'брашно': { unit: 'кг', baseQty: 0.5, type: 'weight' },
+            'краве сирене': { unit: 'г', baseQty: 250, type: 'gram' },
+            'кисело мляко': { unit: 'кофички', baseQty: 1, type: 'count' },
+            'яйца': { unit: 'бр.', baseQty: 3, type: 'count' },
+            'краве масло': { unit: 'пакет (250г)', baseQty: 0.5, type: 'pack' },
+            'картофи': { unit: 'кг', baseQty: 0.8, type: 'weight' },
+            'кайма смес': { unit: 'кг', baseQty: 0.5, type: 'weight' },
+            'пилешко месо': { unit: 'кг', baseQty: 0.6, type: 'weight' },
+            'кори за баница': { unit: 'пакет', baseQty: 1, type: 'count' },
+            'лук': { unit: 'глави', baseQty: 2, type: 'count' },
+            'домати': { unit: 'бр.', baseQty: 2, type: 'count' }
+        };
+
+        const DAYS = ['Понеделник', 'Вторник', 'Сряда', 'Четвъртък', 'Петък', 'Събота', 'Неделя'];
+        let weeklyPlan = JSON.parse(localStorage.getItem('weekly_plan') || JSON.stringify(getInitialPlan()));
+        let customRecipes = JSON.parse(localStorage.getItem('custom_recipes') || '[]');
+        let checkedShoppingItems = JSON.parse(localStorage.getItem('checked_shopping') || '[]');
+        let manualShoppingItems = JSON.parse(localStorage.getItem('manual_shopping') || '[]');
+        let activeCategory = 'Всички';
+        let recipeSubView = 'all';
+
+        function getInitialPlan() {
+            const plan = {};
+            DAYS.forEach(day => plan[day] = { breakfast: '', lunch: '', dinner: '', schoolBox: null, workBox: null });
+            plan['Понеделник'].breakfast = 'Рогче със сирене';
+            plan['Понеделник'].lunch = 'Пилешко фрикасе';
+            plan['Понеделник'].dinner = 'Мусака';
+            return plan;
+        }
+
+        window.onload = function() {
+            renderDaysPlan();
+            renderCategoryBar();
+            renderRecipesGrid();
+            renderShoppingList();
+        };
+
+        function switchTab(tab) {
+            ['plan', 'recipes', 'shopping'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`tab-btn-${t}`).classList.remove('active-tab');
+            });
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-btn-${tab}`).classList.add('active-tab');
+            if (tab === 'shopping') renderShoppingList();
+            if (tab === 'recipes') renderRecipesGrid();
+        }
+
+        function renderDaysPlan() {
+            const container = document.getElementById('days-container');
+            container.innerHTML = '';
+            const allRecipeNames = [...DEFAULT_RECIPES, ...customRecipes].map(r => r.name);
+
+            DAYS.forEach(day => {
+                const dayData = weeklyPlan[day];
+                const card = document.createElement('div');
+                card.className = "bg-white p-3.5 rounded-3xl shadow-sm border border-emerald-100 space-y-2";
+                card.innerHTML = `
+                    <datalist id="recipes-list">${allRecipeNames.map(name => `<option value="${name}">`).join('')}</datalist>
+                    <div class="flex justify-between items-center border-b border-emerald-50 pb-1.5">
+                        <h3 class="font-bold text-emerald-900 text-xs">${day}</h3>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                        <input type="text" value="${dayData.breakfast}" onchange="updatePlanItem('${day}', 'breakfast', this.value)" placeholder="🌅 Закуска..." list="recipes-list" class="w-full px-3 py-1.5 border border-emerald-100 rounded-xl">
+                        <input type="text" value="${dayData.lunch}" onchange="updatePlanItem('${day}', 'lunch', this.value)" placeholder="🥗 Обяд..." list="recipes-list" class="w-full px-3 py-1.5 border border-emerald-100 rounded-xl">
+                        <input type="text" value="${dayData.dinner}" onchange="updatePlanItem('${day}', 'dinner', this.value)" placeholder="🍲 Вечеря..." list="recipes-list" class="w-full px-3 py-1.5 border border-emerald-100 rounded-xl">
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updatePlanItem(day, meal, val) {
+            weeklyPlan[day][meal] = val;
+            localStorage.setItem('weekly_plan', JSON.stringify(weeklyPlan));
+        }
+
+        function renderCategoryBar() {
+            const cats = ['Всички', 'Закуска', 'Основни', 'Супи', 'Десерти'];
+            document.getElementById('recipe-categories-bar').innerHTML = cats.map(c => `
+                <button onclick="activeCategory='${c}'; renderCategoryBar(); renderRecipesGrid();" class="px-3 py-1 rounded-full font-medium ${activeCategory === c ? 'bg-emerald-600 text-white' : 'bg-white text-emerald-800 border border-emerald-100'}">${c}</button>
+            `).join('');
+        }
+
+        function renderRecipesGrid() {
+            const grid = document.getElementById('recipes-grid');
+            const search = document.getElementById('recipe-search').value.toLowerCase();
+            const all = [...DEFAULT_RECIPES, ...customRecipes];
+            let filtered = all.filter(r => r.name.toLowerCase().includes(search) && (activeCategory === 'Всички' || r.cat.includes(activeCategory)));
+            
+            grid.innerHTML = filtered.map(r => `
+                <div onclick="openViewRecipeModal('${r.id}')" class="recipe-card bg-white rounded-3xl border border-emerald-100 shadow-sm overflow-hidden p-3 flex gap-3 items-center">
+                    <img src="${r.img}" class="w-20 h-20 rounded-2xl object-cover">
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-gray-800 text-xs">${r.name}</h4>
+                            <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full">⏱️ ${r.time}m</span>
+                        </div>
+                        <p class="text-[10px] text-gray-500 line-clamp-1 mt-1">${r.ing.join(', ')}</p>
+                        <button class="mt-2 text-[10px] bg-emerald-600 text-white px-2.5 py-1 rounded-xl font-bold hover:bg-emerald-700 transition">
+                            👨‍🍳 Отвори & Готви
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- ЛОГИКА ЗА ДИНАМИЧНО ИЗВЛИЧАНЕ НА ИМЕТО ОТ URL И СНИМКА ---
+        function parseRecipeFromURL() {
+            const inputUrl = document.getElementById('import-url-input').value.trim();
+            if (!inputUrl) {
+                alert('Моля, въведете URL адрес!');
+                return;
+            }
+
+            // Извличане на заглавието от URL адреса (slug парсване)
+            let extractedTitle = "";
+            try {
+                const urlObj = new URL(inputUrl);
+                const pathSegments = urlObj.pathname.split('/').filter(Boolean);
+                const lastSegment = pathSegments[pathSegments.length - 1] || "";
+                
+                // Превръщане на slug в чист текст (напр. domashna-banitsa-sas-sirene -> Домашна Баница С Сирене)
+                extractedTitle = lastSegment
+                    .replace(/\.(html|php|aspx)/g, '')
+                    .replace(/[-_]/g, ' ')
+                    .replace(/\b\w/g, l => l.toUpperCase());
+            } catch (e) {
+                extractedTitle = "Импортирана Рецепта";
+            }
+
+            if (!extractedTitle || extractedTitle.length < 3) {
+                extractedTitle = "Импортирана Рецепта от URL";
+            }
+
+            // Автоматично попълване на формата с извлеченото ИМЕ
+            document.getElementById('custom-title').value = extractedTitle;
+            document.getElementById('custom-time').value = 40;
+            document.getElementById('custom-ingredients').value = "Брашно 500г, Краве сирене 300г, Яйца 3 бр, Краве масло 50г";
+            document.getElementById('custom-steps').value = "1. Загрейте фурната на 180°C.\n2. Смесете съставките и изпечете за 30-35 минути.";
+        }
+
+        function parseRecipeFromOCR(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Сканиране и извличане от снимка
+                const cleanFileName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, ' ');
+                document.getElementById('custom-title').value = "Рецепта: " + cleanFileName;
+                document.getElementById('custom-time').value = 45;
+                document.getElementById('custom-ingredients').value = "Брашно 1 кг, Захар 200г, Яйца 4 бр, Прясно мляко 500мл";
+                document.getElementById('custom-steps').value = "1. Разбийте яйцата със захарта.\n2. Добавете млякото и брашното.\n3. Изпечете на 180°C.";
+            }
+        }
+
+        function openViewRecipeModal(id) {
+            const all = [...DEFAULT_RECIPES, ...customRecipes];
+            const r = all.find(item => item.id === id);
+            if (!r) return;
+
+            document.getElementById('view-recipe-title').innerText = r.name;
+            document.getElementById('view-recipe-time').innerText = r.time;
+            document.getElementById('view-recipe-diff').innerText = r.diff;
+            document.getElementById('view-recipe-img').src = r.img;
+
+            document.getElementById('view-recipe-ingredients').innerHTML = r.ing.map(ing => `
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="w-4 h-4 text-emerald-600 rounded">
+                    <span>${ing}</span>
+                </label>
+            `).join('');
+
+            const stepsList = r.steps && r.steps.length > 0 ? r.steps : ['Няма въведени последователни стъпки за тази рецепта.'];
+            document.getElementById('view-recipe-steps').innerHTML = stepsList.map((step, idx) => `
+                <label class="flex items-start gap-2.5 p-2 bg-gray-50 rounded-xl cursor-pointer hover:bg-emerald-50/50 transition">
+                    <input type="checkbox" class="w-4 h-4 text-emerald-600 rounded mt-0.5">
+                    <span class="leading-relaxed"><strong>${idx + 1}.</strong> ${step}</span>
+                </label>
+            `).join('');
+
+            document.getElementById('view-recipe-modal').classList.remove('hidden');
+        }
+
+        function closeViewRecipeModal() {
+            document.getElementById('view-recipe-modal').classList.add('hidden');
+        }
+
+        function renderShoppingList() {
+            const container = document.getElementById('shopping-list-items');
+            const allRecipes = [...DEFAULT_RECIPES, ...customRecipes];
+            const rawIngredientsMap = {};
+
+            Object.values(weeklyPlan).forEach(day => {
+                [day.breakfast, day.lunch, day.dinner, day.schoolBox, day.workBox].filter(Boolean).forEach(mealName => {
+                    const recipe = allRecipes.find(r => r.name.toLowerCase() === mealName.toLowerCase());
+                    if (recipe) {
+                        recipe.ing.forEach(ing => {
+                            const cleanName = ing.replace(/[0-9]|г|кг|бр|мл|л|кофичка|пакет|с\.л\.|ч\.л\./gi, '').trim().toLowerCase();
+                            if (cleanName) rawIngredientsMap[cleanName] = (rawIngredientsMap[cleanName] || 0) + 1;
+                        });
+                    }
+                });
+            });
+
+            const keys = Object.keys(rawIngredientsMap);
+            if (keys.length === 0 && manualShoppingItems.length === 0) {
+                container.innerHTML = `<div class="p-6 text-center text-gray-400 text-xs">Няма продукти. Изберете рецепти в плана за седмицата.</div>`;
+                return;
+            }
+
+            let html = keys.map(ingKey => {
+                const countOccurrences = rawIngredientsMap[ingKey];
+                const itemConfig = UNIT_DICTIONARY[ingKey];
+                let displayQuantity = '';
+                let displayName = ingKey.charAt(0).toUpperCase() + ingKey.slice(1);
+
+                if (itemConfig) {
+                    const totalQty = itemConfig.baseQty * countOccurrences;
+                    if (itemConfig.type === 'gram') displayQuantity = totalQty >= 1000 ? `${(totalQty / 1000).toFixed(1)} кг` : `${totalQty} г`;
+                    else if (itemConfig.type === 'weight') displayQuantity = `${totalQty.toFixed(1)} кг`;
+                    else displayQuantity = `${totalQty} ${itemConfig.unit}`;
+                } else displayQuantity = `${countOccurrences} бр.`;
+
+                const isChecked = checkedShoppingItems.includes(displayName);
+
+                return `
+                    <div class="p-3 flex justify-between items-center ${isChecked ? 'bg-emerald-50/40 opacity-50' : ''}">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleCheckItem('${displayName}')" class="w-4 h-4 rounded text-emerald-600">
+                            <span class="text-xs font-semibold ${isChecked ? 'line-through text-gray-400' : 'text-gray-800'}">${displayName}</span>
+                        </label>
+                        <span class="text-xs bg-emerald-100/70 text-emerald-800 font-bold px-2.5 py-1 rounded-full border border-emerald-200/60">${displayQuantity}</span>
+                    </div>
+                `;
+            }).join('');
+
+            manualShoppingItems.forEach(item => {
+                const isChecked = checkedShoppingItems.includes(item);
+                html += `
+                    <div class="p-3 flex justify-between items-center ${isChecked ? 'bg-emerald-50/40 opacity-50' : ''}">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleCheckItem('${item}')" class="w-4 h-4 rounded text-emerald-600">
+                            <span class="text-xs font-semibold ${isChecked ? 'line-through text-gray-400' : 'text-gray-800'}">${item}</span>
+                        </label>
+                        <button onclick="removeManualItem('${item}')" class="text-gray-300 hover:text-rose-500 text-xs px-2">&times;</button>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function toggleCheckItem(item) {
+            if (checkedShoppingItems.includes(item)) checkedShoppingItems = checkedShoppingItems.filter(i => i !== item);
+            else checkedShoppingItems.push(item);
+            localStorage.setItem('checked_shopping', JSON.stringify(checkedShoppingItems));
+            renderShoppingList();
+        }
+
+        function addManualShoppingItem() {
+            const val = document.getElementById('manual-item-input').value.trim();
+            if (val && !manualShoppingItems.includes(val)) {
+                manualShoppingItems.push(val);
+                localStorage.setItem('manual_shopping', JSON.stringify(manualShoppingItems));
+                document.getElementById('manual-item-input').value = '';
+                renderShoppingList();
+            }
+        }
+
+        function removeManualItem(item) {
+            manualShoppingItems = manualShoppingItems.filter(i => i !== item);
+            localStorage.setItem('manual_shopping', JSON.stringify(manualShoppingItems));
+            renderShoppingList();
+        }
+
+        function clearCheckedShoppingItems() {
+            checkedShoppingItems = [];
+            localStorage.setItem('checked_shopping', JSON.stringify(checkedShoppingItems));
+            renderShoppingList();
+        }
+
+        function clearWeeklyPlan() {
+            if (confirm('Сигурни ли сте, че искате да изчистите плана за седмицата?')) {
+                DAYS.forEach(day => weeklyPlan[day] = { breakfast: '', lunch: '', dinner: '', schoolBox: null, workBox: null });
+                localStorage.setItem('weekly_plan', JSON.stringify(weeklyPlan));
+                renderDaysPlan();
+            }
+        }
+
+        function openAddRecipeModal() { document.getElementById('recipe-modal').classList.remove('hidden'); }
+        function closeAddRecipeModal() { document.getElementById('recipe-modal').classList.add('hidden'); }
+        function setAddMode(mode) {
+            ['url', 'ocr', 'manual'].forEach(m => document.getElementById(`add-mode-${m}`).classList.add('hidden'));
+            document.getElementById(`add-mode-${mode}`).classList.remove('hidden');
+        }
+
+        function saveCustomRecipe(e) {
+            e.preventDefault();
+            const title = document.getElementById('custom-title').value.trim();
+            const time = parseInt(document.getElementById('custom-time').value) || 30;
+            const diff = document.getElementById('custom-difficulty').value;
+            const ingText = document.getElementById('custom-ingredients').value;
+            const stepsText = document.getElementById('custom-steps').value;
+
+            const newRecipe = {
+                id: 'c_' + Date.now(),
+                name: title,
+                time: time,
+                diff: diff,
+                cat: ['Основни'],
+                ing: ingText.split(',').map(i => i.trim()).filter(Boolean),
+                steps: stepsText ? stepsText.split('\n').filter(Boolean) : ['Следвайте стандартните стъпки.'],
+                img: 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=400&q=80'
+            };
+
+            customRecipes.push(newRecipe);
+            localStorage.setItem('custom_recipes', JSON.stringify(customRecipes));
+            closeAddRecipeModal();
+            renderRecipesGrid();
+            renderDaysPlan();
+        }
+    </script>
+</body>
+</html>
